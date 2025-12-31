@@ -334,16 +334,7 @@ Welcome to the Loan Application API
 ### Observability
 
 - [ ] **Logging** — Structured logging with correlation IDs
-- [ ] **Health checks** — Expand `/healthz` to verify DB connectivity
-
-### DevOps & CI/CD
-
-- [ ] **CI/CD Pipeline** — GitHub Actions for:
-
-  - Automated testing on PR
-  - Linting (flake8/black)
-  - Docker image build and push
-  - Deployment to cloud (e.g., AWS ECS, GCP Cloud Run)
+- [ ] **Health checks** — Expand `/health` to verify DB connectivity
 
 - [ ] **Docker Entrypoint** — Run migrations automatically on container start:
 
