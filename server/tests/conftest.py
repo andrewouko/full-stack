@@ -15,19 +15,6 @@ from tests.factories import LoanFactory, LoanPaymentFactory
 from container import Container
 from services import LoanService
 
-
-@pytest.fixture
-def app() -> Generator[Flask, None, None]:
-    app = create_app()
-    app.config["TESTING"] = True
-    yield app
-
-
-@pytest.fixture
-def client(app: Flask) -> Generator[FlaskClient, None, None]:
-    with app.test_client() as client:
-        yield client
-
 @pytest.fixture
 def loan_datastore() -> InMemoryDataStore[Loan]:
     # 5 dummy loans created using our LoanFactory
@@ -63,6 +50,19 @@ def setup_container(
     )
     yield
     Container.reset()
+
+@pytest.fixture
+@pytest.mark.usefixtures("setup_container")
+def app() -> Generator[Flask, None, None]:
+    app = create_app()
+    app.config["TESTING"] = True
+    yield app
+
+
+@pytest.fixture
+def client(app: Flask) -> Generator[FlaskClient, None, None]:
+    with app.test_client() as client:
+        yield client
 
 
 @pytest.fixture

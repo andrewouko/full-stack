@@ -25,6 +25,9 @@ class Container:
 
     @classmethod
     def init(cls, config: Config) -> None:
+        # Skip if already initialized
+        if cls._loan_datastore is not None and cls._payment_datastore is not None:
+            return
         cls.reset()
         if config.datastore_type == "in_memory":
             cls._loan_datastore = InMemoryDataStore[Loan](
