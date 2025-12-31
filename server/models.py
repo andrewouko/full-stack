@@ -71,4 +71,5 @@ class LoanPaymentResponse:
     principal: float
     due_date: datetime.date
     status: PaymentStatus
+    amount: float
     payment_date: Optional[datetime.date] = None

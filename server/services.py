@@ -57,6 +57,7 @@ class LoanService:
                     due_date=loan.due_date,
                     payment_date=None,
                     status=PaymentStatus.UNPAID,
+                    amount=0.0
                 )
             ]
 
@@ -70,6 +71,7 @@ class LoanService:
                 payment_date=payment.payment_date,
                 status=self._get_loan_payment_status(
                     loan.due_date, payment.payment_date),
+                amount=payment.amount
             )
             for payment in payments
         ]
