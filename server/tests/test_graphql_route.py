@@ -64,9 +64,11 @@ class TestGraphQLRoute:
         query {{
             loanPayments(loanId: {existing_loan.id}) {{
                 id
-                loanId
+                name
+                interestRate
+                principal
+                dueDate
                 paymentDate
-                amount
                 status
             }}
         }}
@@ -80,6 +82,5 @@ class TestGraphQLRoute:
         payments = cast(list[dict[str, Any]], data["data"]["loanPayments"])
         assert isinstance(payments, list)
         assert len(payments) >= 1
-        print(f"Payments retrieved: {payments}")
-        assert all(payment["loanId"] ==
-                   existing_loan.id for payment in payments)
+        assert all(payment["name"] ==
+                   existing_loan.name for payment in payments)

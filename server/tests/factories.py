@@ -27,18 +27,20 @@ class LoanPaymentFactory(factory.Factory):
         exclude = ('loan',)
 
     id = factory.Sequence(lambda n: n + 1)
-
-    loan = factory.SubFactory(LoanFactory)
     
-    loan_id = factory.LazyAttribute(lambda obj: obj.loan.id)
+    # generate a payment amount (between 100 and 10,000) that does not exceed the total owed
     amount = factory.LazyAttribute(
         lambda o: min(
             faker.pyfloat(min_value=100.0, max_value=10_000.0, right_digits=2),
             o.loan.principal + (o.loan.interest_rate / 100) * o.loan.principal
         )
     )
+
+    # build a loan and copy loan id into the payment record
+    loan = factory.SubFactory(LoanFactory)
+    loan_id = factory.LazyAttribute(lambda o: o.loan.id)
+    
     payment_date = factory.LazyAttribute(lambda o: o.loan.due_date)
-    status = None
     
     class Params:
         unpaid = factory.Trait(payment_date=None)

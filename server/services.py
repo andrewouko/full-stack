@@ -1,7 +1,7 @@
 from datetime import date
 from itertools import count
 from typing import Any, List, Optional
-from models import Loan, LoanFilter, LoanPayment, LoanPaymentInput
+from models import Loan, LoanFilter, LoanPayment, LoanPaymentInput, LoanPaymentResponse, PaymentStatus
 from datastore import DataStore
 
 
@@ -27,7 +27,7 @@ class LoanService:
                 return loan.interest_rate <= filter.interest_rate
             if filter.principal is not None and loan.principal != filter.principal:
                 return False
-            if filter.due_date is not None and loan.due_date != filter.due_date:
+            if filter.due_date is not None and loan.due_date <= filter.due_date:
                 return False
             return True
 
@@ -36,7 +36,7 @@ class LoanService:
     def get_loan_by_id(self, loan_id: int) -> Optional[Loan]:
         return self._loan_data.get_by_id(loan_id)
 
-    def get_loan_payments(self, loan_id: int, cursor: Optional[int] = None, limit: Optional[int] = None) -> List[LoanPayment]:
+    def get_loan_payments(self, loan_id: int, cursor: Optional[int] = None, limit: Optional[int] = None) -> List[LoanPaymentResponse]:
         loan = self.get_loan_by_id(loan_id)
         if loan is None:
             return []
@@ -46,32 +46,45 @@ class LoanService:
 
         payments = self._loan_payment_data.get_all(
             cursor=cursor, limit=limit, filter_fn=filter_fn)
+        
+        if len(payments) == 0:
+            return [
+                LoanPaymentResponse(
+                    id=-1,
+                    name=loan.name,
+                    interest_rate=loan.interest_rate,
+                    principal=loan.principal,
+                    due_date=loan.due_date,
+                    payment_date=None,
+                    status=PaymentStatus.UNPAID,
+                )
+            ]
 
         return [
-            LoanPayment(
+            LoanPaymentResponse(
                 id=payment.id,
-                loan_id=payment.loan_id,
+                name=loan.name,
+                interest_rate=loan.interest_rate,
+                principal=loan.principal,
+                due_date=loan.due_date,
                 payment_date=payment.payment_date,
-                amount=payment.amount,
                 status=self._get_loan_payment_status(
-                    loan_due_date=loan.due_date,
-                    payment_date=payment.payment_date
-                )
+                    loan.due_date, payment.payment_date),
             )
             for payment in payments
         ]
 
-    def _get_loan_payment_status(self, loan_due_date: date, payment_date: Optional[date]) -> str:
+    def _get_loan_payment_status(self, loan_due_date: date, payment_date: Optional[date]) -> PaymentStatus:
         if payment_date is None:
-            return "Unpaid"
+            return PaymentStatus.UNPAID
 
         days_late = (payment_date - loan_due_date).days
         if days_late <= 5:
-            return "On Time"
+            return PaymentStatus.ON_TIME
         elif 6 <= days_late <= 30:
-            return "Late"
+            return PaymentStatus.LATE
         else:
-            return "Defaulted"
+            return PaymentStatus.DEFAULTED
 
     def validate_and_format_loan_payment_request(self, input: dict[str, Any]) -> LoanPaymentInput:
         loan_id = input.get("loan_id")
@@ -83,22 +96,13 @@ class LoanService:
         if not isinstance(amount, (int, float)) or amount <= 0:
             raise ValueError("amount must be a positive number.")
 
-        loan = self.get_loan_by_id(loan_id)
-        if loan is None:
-            raise ValueError(f"Loan with id {loan_id} does not exist.")
-
-        # TODO: Not a scalable way to check total payments against principal
-        loan_payments = self.get_loan_payments(loan_id)
-        total_paid = sum(payment.amount for payment in loan_payments)
-        interest = (loan.interest_rate / 100) * loan.principal
-        total_due = loan.principal + interest
-        if total_paid + amount > total_due:
-            raise ValueError(
-                f"Payment exceeds total amount due for loan id {loan_id}. Total due: {total_due}, already paid: {total_paid}, attempted payment: {amount}.")
-
         return LoanPaymentInput(loan_id=loan_id, amount=float(amount))
 
     def add_loan_payment(self, input: LoanPaymentInput) -> LoanPayment:
+        loan = self.get_loan_by_id(input.loan_id)
+        if loan is None:
+            raise ValueError(f"Loan with id {input.loan_id} does not exist.")
+        
         loan_payment = LoanPayment(
             id=next(self._id_counter),
             loan_id=input.loan_id,

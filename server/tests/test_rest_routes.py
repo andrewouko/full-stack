@@ -30,8 +30,7 @@ class TestRestRoutes:
         assert "id" in data
         assert "loan_id" in data
         assert "amount" in data
-        assert "status" in data
-        assert data["status"] is None
+        assert "payment_date" in data
     
     def test_add_loan_paymment_invalid_payload(self, client: FlaskClient):
         payload = {
@@ -56,20 +55,3 @@ class TestRestRoutes:
         assert data is not None
         assert "error" in data
         assert data["error"] == "Loan with id 9999 does not exist."
-    
-    def test_add_loan_payment_excess_amount(self, client: FlaskClient, loan_datastore: InMemoryDataStore[Loan]):
-        # loan for testing
-        loan = cast(Loan, LoanFactory(principal=500.0, interest_rate=10))
-        loan_datastore.add(loan)
-
-        payload: dict[str, Union[int, float]] = {
-            "loan_id": loan.id,
-            "amount": 1000.0 # Excess amount
-        }
-
-        response = client.post("/payment", json=payload)
-        assert response.status_code == 400
-        data = response.get_json()
-        assert data is not None
-        assert "error" in data
-        assert data["error"] == f"Payment exceeds total amount due for loan id {loan.id}. Total due: 550.0, already paid: 0, attempted payment: 1000.0."

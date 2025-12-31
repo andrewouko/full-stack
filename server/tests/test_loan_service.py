@@ -1,5 +1,5 @@
 from typing import cast
-from models import LoanFilter, LoanPayment
+from models import LoanFilter, LoanPayment, PaymentStatus
 from models import Loan
 from datastore import InMemoryDataStore
 from tests.factories import LoanPaymentFactory
@@ -68,78 +68,56 @@ class TestLoanServiceGetLoanPayments:
         result = loan_service.get_loan_payments(
             loan_id=target_loan.id, cursor=None, limit=None)
         assert len(result) > 0
-        assert all(payment.loan_id == target_loan.id for payment in result)
+        assert all(payment.name == target_loan.name for payment in result)
 
-    def test_get_loan_payments_not_found(self, loan_service: LoanService, loan_datastore: InMemoryDataStore[Loan]):
-        # Get a loan that has no payments
-        all_loans = loan_datastore.get_all(cursor=None, limit=None)
-        target_loan = all_loans[0]
-
+    def test_get_loan_payments_not_found(self, loan_service: LoanService, loan_with_no_payments: Loan):
         result = loan_service.get_loan_payments(
-            loan_id=target_loan.id, cursor=None, limit=None)
-        assert len(result) == 0
+            loan_id=loan_with_no_payments.id, cursor=None, limit=None)
+        assert len(result) == 1
+        assert result[0].status == PaymentStatus.UNPAID
+        assert result[0].payment_date is None
+        assert result[0].id == -1
 
-    def test_on_time_payment_status(self, loan_service: LoanService, loan_datastore: InMemoryDataStore[Loan], payment_datastore: InMemoryDataStore[LoanPayment]):
-        # use first loan as it has no payments
-        all_loans = loan_datastore.get_all(cursor=None, limit=None)
-        target_loan = all_loans[0]
-        assert loan_service.get_loan_payments(
-            loan_id=target_loan.id, cursor=None, limit=None) == []
-        
+    def test_on_time_payment_status(self, loan_service: LoanService, loan_with_no_payments: Loan, payment_datastore: InMemoryDataStore[LoanPayment]):
         # Create on-time payment and add to payment repo
-        payment = cast(LoanPayment, LoanPaymentFactory(loan=target_loan))
+        payment = cast(LoanPayment, LoanPaymentFactory(
+            loan=loan_with_no_payments))
         payment_datastore.add(payment)
-        
+
         payments = loan_service.get_loan_payments(
-            loan_id=target_loan.id, cursor=None, limit=None)
+            loan_id=loan_with_no_payments.id, cursor=None, limit=None)
         assert len(payments) == 1
-        assert payments[0].status == "On Time"
-    
-    def test_unpaid_payment_status(self, loan_service: LoanService, loan_datastore: InMemoryDataStore[Loan], payment_datastore: InMemoryDataStore[LoanPayment]):
-        # use first loan as it has no payments
-        all_loans = loan_datastore.get_all(cursor=None, limit=None)
-        target_loan = all_loans[0]
-        assert loan_service.get_loan_payments(
-            loan_id=target_loan.id, cursor=None, limit=None) == []
-        
+        assert payments[0].status == PaymentStatus.ON_TIME
+
+    def test_unpaid_payment_status(self, loan_service: LoanService, loan_with_no_payments: Loan, payment_datastore: InMemoryDataStore[LoanPayment]):
         # Create payment with no payment date and add to payment repo
-        payment = cast(LoanPayment, LoanPaymentFactory(loan=target_loan, unpaid=True))
+        payment = cast(LoanPayment, LoanPaymentFactory(
+            loan=loan_with_no_payments, unpaid=True))
         payment_datastore.add(payment)
-        
+
         payments = loan_service.get_loan_payments(
-            loan_id=target_loan.id, cursor=None, limit=None)
+            loan_id=loan_with_no_payments.id, cursor=None, limit=None)
         assert len(payments) == 1
-        assert payments[0].status == "Unpaid"
-        
-    def test_late_payment_status(self, loan_service: LoanService, loan_datastore: InMemoryDataStore[Loan], payment_datastore: InMemoryDataStore[LoanPayment]):
-        # use first loan as it has no payments
-        all_loans = loan_datastore.get_all(cursor=None, limit=None)
-        target_loan = all_loans[0]
-        assert loan_service.get_loan_payments(
-            loan_id=target_loan.id, cursor=None, limit=None) == []
-        
+        assert payments[0].status == PaymentStatus.UNPAID
+
+    def test_late_payment_status(self, loan_service: LoanService, loan_with_no_payments: Loan, payment_datastore: InMemoryDataStore[LoanPayment]):
         # Create payment with no payment date and add to payment repo
-        payment = cast(LoanPayment, LoanPaymentFactory(loan=target_loan, late=True))
+        payment = cast(LoanPayment, LoanPaymentFactory(
+            loan=loan_with_no_payments, late=True))
         payment_datastore.add(payment)
-        
+
         payments = loan_service.get_loan_payments(
-            loan_id=target_loan.id, cursor=None, limit=None)
+            loan_id=loan_with_no_payments.id, cursor=None, limit=None)
         assert len(payments) == 1
-        assert payments[0].status == "Late"
-    
-    def test_defaulted_payment_status(self, loan_service: LoanService, loan_datastore: InMemoryDataStore[Loan], payment_datastore: InMemoryDataStore[LoanPayment]):
-        # use first loan as it has no payments
-        all_loans = loan_datastore.get_all(cursor=None, limit=None)
-        target_loan = all_loans[0]
-        assert loan_service.get_loan_payments(
-            loan_id=target_loan.id, cursor=None, limit=None) == []
-        
+        assert payments[0].status == PaymentStatus.LATE
+
+    def test_defaulted_payment_status(self, loan_service: LoanService, loan_with_no_payments: Loan, payment_datastore: InMemoryDataStore[LoanPayment]):
         # Create payment with no payment date and add to payment repo
-        payment = cast(LoanPayment, LoanPaymentFactory(loan=target_loan, defaulted=True))
+        payment = cast(LoanPayment, LoanPaymentFactory(
+            loan=loan_with_no_payments, defaulted=True))
         payment_datastore.add(payment)
-        
+
         payments = loan_service.get_loan_payments(
-            loan_id=target_loan.id, cursor=None, limit=None)
+            loan_id=loan_with_no_payments.id, cursor=None, limit=None)
         assert len(payments) == 1
-        assert payments[0].status == "Defaulted"
-       
+        assert payments[0].status == PaymentStatus.DEFAULTED

@@ -1,7 +1,7 @@
 from typing import List, Optional
 import strawberry
 
-from models import Loan, LoanFilter, LoanPayment
+from models import Loan, LoanFilter, LoanPaymentResponse
 from container import Container
 
 
@@ -19,7 +19,7 @@ class Query:
         return loan_service.get_loan_by_id(loan_id)
 
     @strawberry.field
-    def loan_payments(self, loan_id: int, cursor: Optional[int] = None, limit: Optional[int] = None) -> List[LoanPayment]:
+    def loan_payments(self, loan_id: int, cursor: Optional[int] = None, limit: Optional[int] = None) -> List[LoanPaymentResponse]:
         loan_service = Container.loan_service()
         return loan_service.get_loan_payments(loan_id, cursor, limit)
 

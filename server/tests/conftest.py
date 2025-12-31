@@ -8,12 +8,13 @@ from flask.testing import FlaskClient
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from app import create_app
-from models import Loan, LoanPayment
-from datastore import InMemoryDataStore
-from tests.factories import LoanFactory, LoanPaymentFactory
-from container import Container
 from services import LoanService
+from container import Container
+from tests.factories import LoanFactory, LoanPaymentFactory
+from datastore import InMemoryDataStore
+from models import Loan, LoanPayment, PaymentStatus
+from app import create_app
+
 
 @pytest.fixture
 def loan_datastore() -> InMemoryDataStore[Loan]:
@@ -30,7 +31,7 @@ def payment_datastore(loan_datastore: InMemoryDataStore[Loan]) -> InMemoryDataSt
         # Skip creating payments for the first loan to test no-payment scenario
         if i == 0:
             continue
-        
+
         payments.extend([
             # Create one or two payments per loan
             cast(LoanPayment, LoanPaymentFactory(loan=loan))
@@ -51,6 +52,7 @@ def setup_container(
     yield
     Container.reset()
 
+
 @pytest.fixture
 @pytest.mark.usefixtures("setup_container")
 def app() -> Generator[Flask, None, None]:
@@ -69,3 +71,16 @@ def client(app: Flask) -> Generator[FlaskClient, None, None]:
 @pytest.mark.usefixtures("setup_container")
 def loan_service() -> LoanService:
     return Container.loan_service()
+
+
+@pytest.fixture
+def loan_with_no_payments(loan_datastore: InMemoryDataStore[Loan], loan_service: LoanService) -> Loan:
+    all_loans = loan_datastore.get_all(cursor=None, limit=None)
+    target_loan = all_loans[0]
+    unpaid_payments = loan_service.get_loan_payments(
+        loan_id=target_loan.id, cursor=None, limit=None)
+    assert len(unpaid_payments) == 1
+    assert unpaid_payments[0].status == PaymentStatus.UNPAID
+    assert unpaid_payments[0].payment_date is None
+    assert unpaid_payments[0].id == -1
+    return target_loan

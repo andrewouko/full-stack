@@ -35,9 +35,9 @@ loans: list[Loan] = [
 
 loan_payments: list[LoanPayment] = [
     LoanPayment(id=1, loan_id=1, payment_date=datetime.date(
-        2024, 3, 4), amount=1000.0),
+        2025, 3, 4), amount=1000.0),
     LoanPayment(id=2, loan_id=2, payment_date=datetime.date(
-        2024, 3, 15), amount=2000.0),
+        2025, 3, 15), amount=2000.0),
     LoanPayment(id=3, loan_id=3, payment_date=datetime.date(
-        2024, 4, 5), amount=1500.0),
+        2025, 4, 5), amount=1500.0),
 ]
