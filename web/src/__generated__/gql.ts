@@ -14,12 +14,14 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query GetLoans($cursor: Int, $limit: Int) {\n    loans(cursor: $cursor, limit: $limit) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n": typeof types.GetLoansDocument,
-    "\n  query LoanPayments($loanId: Int!, $cursor: Int, $limit: Int) {\n    loanPayments(loanId: $loanId, cursor: $cursor, limit: $limit) {\n      id\n      loanId\n      paymentDate\n      amount\n      status\n    }\n  }\n": typeof types.LoanPaymentsDocument,
+    "\n  query Loans($cursor: Int, $limit: Int, $filter: LoanFilter) {\n    loans(cursor: $cursor, limit: $limit, filter: $filter) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n": typeof types.LoansDocument,
+    "\n  query Loan($loanId: Int!) {\n    loan(loanId: $loanId) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n": typeof types.LoanDocument,
+    "\n  query LoanPayments($loanId: Int!, $cursor: Int, $limit: Int) {\n    loanPayments(loanId: $loanId, cursor: $cursor, limit: $limit) {\n      name\n      interestRate\n      principal\n      dueDate\n      status\n      paymentDate\n      id\n      amount\n    }\n  }\n": typeof types.LoanPaymentsDocument,
 };
 const documents: Documents = {
-    "\n  query GetLoans($cursor: Int, $limit: Int) {\n    loans(cursor: $cursor, limit: $limit) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n": types.GetLoansDocument,
-    "\n  query LoanPayments($loanId: Int!, $cursor: Int, $limit: Int) {\n    loanPayments(loanId: $loanId, cursor: $cursor, limit: $limit) {\n      id\n      loanId\n      paymentDate\n      amount\n      status\n    }\n  }\n": types.LoanPaymentsDocument,
+    "\n  query Loans($cursor: Int, $limit: Int, $filter: LoanFilter) {\n    loans(cursor: $cursor, limit: $limit, filter: $filter) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n": types.LoansDocument,
+    "\n  query Loan($loanId: Int!) {\n    loan(loanId: $loanId) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n": types.LoanDocument,
+    "\n  query LoanPayments($loanId: Int!, $cursor: Int, $limit: Int) {\n    loanPayments(loanId: $loanId, cursor: $cursor, limit: $limit) {\n      name\n      interestRate\n      principal\n      dueDate\n      status\n      paymentDate\n      id\n      amount\n    }\n  }\n": types.LoanPaymentsDocument,
 };
 
 /**
@@ -39,11 +41,15 @@ export function gql(source: string): unknown;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query GetLoans($cursor: Int, $limit: Int) {\n    loans(cursor: $cursor, limit: $limit) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n"): (typeof documents)["\n  query GetLoans($cursor: Int, $limit: Int) {\n    loans(cursor: $cursor, limit: $limit) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n"];
+export function gql(source: "\n  query Loans($cursor: Int, $limit: Int, $filter: LoanFilter) {\n    loans(cursor: $cursor, limit: $limit, filter: $filter) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n"): (typeof documents)["\n  query Loans($cursor: Int, $limit: Int, $filter: LoanFilter) {\n    loans(cursor: $cursor, limit: $limit, filter: $filter) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query LoanPayments($loanId: Int!, $cursor: Int, $limit: Int) {\n    loanPayments(loanId: $loanId, cursor: $cursor, limit: $limit) {\n      id\n      loanId\n      paymentDate\n      amount\n      status\n    }\n  }\n"): (typeof documents)["\n  query LoanPayments($loanId: Int!, $cursor: Int, $limit: Int) {\n    loanPayments(loanId: $loanId, cursor: $cursor, limit: $limit) {\n      id\n      loanId\n      paymentDate\n      amount\n      status\n    }\n  }\n"];
+export function gql(source: "\n  query Loan($loanId: Int!) {\n    loan(loanId: $loanId) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n"): (typeof documents)["\n  query Loan($loanId: Int!) {\n    loan(loanId: $loanId) {\n      id\n      name\n      interestRate\n      principal\n      dueDate\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query LoanPayments($loanId: Int!, $cursor: Int, $limit: Int) {\n    loanPayments(loanId: $loanId, cursor: $cursor, limit: $limit) {\n      name\n      interestRate\n      principal\n      dueDate\n      status\n      paymentDate\n      id\n      amount\n    }\n  }\n"): (typeof documents)["\n  query LoanPayments($loanId: Int!, $cursor: Int, $limit: Int) {\n    loanPayments(loanId: $loanId, cursor: $cursor, limit: $limit) {\n      name\n      interestRate\n      principal\n      dueDate\n      status\n      paymentDate\n      id\n      amount\n    }\n  }\n"];
 
 export function gql(source: string) {
   return (documents as any)[source] ?? {};

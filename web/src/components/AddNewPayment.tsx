@@ -13,6 +13,7 @@ export const AddNewPayment = () => {
   const [amount, setAmount] = useState<number | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
 
   const validateInput = () => {
     if (loanId === null || amount === null) {
@@ -54,7 +55,7 @@ export const AddNewPayment = () => {
       // Clear form fields upon successful submission
       setLoanId(null);
       setAmount(null);
-      console.log("Payment added successfully:", responseData);
+      setShowSuccessModal(true);
     } else {
       const errorMessage =
         "error" in responseData && responseData.error
@@ -108,6 +109,19 @@ export const AddNewPayment = () => {
             <button type="submit">Add Payment</button>
           </p>
         </form>
+      )}
+      {showSuccessModal && (
+        <div className="modal-overlay">
+          <div className="modal alert-success">
+            <p>Payment added successfully!</p>
+            <button
+              className="modal-close"
+              onClick={() => setShowSuccessModal(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

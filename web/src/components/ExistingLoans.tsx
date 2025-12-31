@@ -4,16 +4,31 @@ import { usePagination } from "../hooks/pagination";
 import { Table } from "./table";
 import { Spinner } from "./spinner";
 import {
-  GetLoansDocument,
-  GetLoansQuery,
-  GetLoansQueryVariables,
+  LoansDocument,
+  LoansQuery,
+  LoansQueryVariables,
   LoanPaymentsDocument,
   LoanPaymentsQuery,
   LoanPaymentsQueryVariables,
+  PaymentStatus,
 } from "../__generated__/graphql";
 import { Loan } from "../types";
 
 const PAGE_SIZE_OPTIONS = [1, 5, 10];
+
+const paymentStatusClass: Record<PaymentStatus, string> = {
+  ON_TIME: "on-time-status",
+  LATE: "late-status",
+  DEFAULTED: "defaulted-status",
+  UNPAID: "unpaid-status",
+};
+
+const paymentStatusText: Record<PaymentStatus, string> = {
+  ON_TIME: "On Time",
+  LATE: "Late",
+  DEFAULTED: "Defaulted",
+  UNPAID: "Unpaid",
+};
 
 const PaymentList: React.FC<{ loan: Loan }> = ({ loan }) => {
   const { data, loading, error } = useQuery<
@@ -30,10 +45,20 @@ const PaymentList: React.FC<{ loan: Loan }> = ({ loan }) => {
   const loanPayments = data?.loanPayments ?? [];
   return (
     <>
-      <h2>Payments for Loan: {loan.name}</h2>
+      <h2>
+        Payments for Loan: <em>{loan.name}</em>
+      </h2>
       <Table
         title="Payments"
-        columnNames={["Payment ID", "Amount", "Date"]}
+        columnNames={[
+          "Payment ID",
+          "Payment Amount",
+          "Interest Rate",
+          "Principal",
+          "Due Date",
+          "Payment Date",
+          "Status",
+        ]}
         data={loanPayments.map((payment) => ({
           id: payment.id,
           amount: payment.amount.toLocaleString("en-KE", {
@@ -42,7 +67,21 @@ const PaymentList: React.FC<{ loan: Loan }> = ({ loan }) => {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }),
-          paymentDate: payment.paymentDate,
+          interestRate: (payment.interestRate / 100).toLocaleString("en-KE", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            style: "percent",
+          }),
+          principal: payment.principal.toLocaleString("en-KE", {
+            style: "currency",
+            currency: "KES",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }),
+          dueDate: payment.dueDate,
+          paymentDate: payment.paymentDate ? payment.paymentDate : "N/A",
+          status: paymentStatusText[payment.status],
+          className: paymentStatusClass[payment.status],
         }))}
         loading={false}
         hasError={false}
@@ -55,12 +94,12 @@ export const ExistingLoans: React.FC = () => {
   const [limit, setLimit] = useState<number>(PAGE_SIZE_OPTIONS[0]);
   const { goToNextPage, goToPreviousPage, cursor } = usePagination();
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
-  const { data, loading, error } = useQuery<
-    GetLoansQuery,
-    GetLoansQueryVariables
-  >(GetLoansDocument, {
-    variables: { cursor, limit },
-  });
+  const { data, loading, error } = useQuery<LoansQuery, LoansQueryVariables>(
+    LoansDocument,
+    {
+      variables: { cursor, limit },
+    }
+  );
 
   if (loading) return <Spinner />;
   if (error) return <div>Error: {error.message}</div>;
@@ -109,8 +148,16 @@ export const ExistingLoans: React.FC = () => {
         }
       />
       {selectedLoan && (
-        <div className="modal-overlay">
-          <div className="modal">
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            // Prevent bubbling to avoid closing when clicking inside the modal
+            if (e.target === e.currentTarget) {
+              setSelectedLoan(null);
+            }
+          }}
+        >
+          <div className="modal scrollable-modal">
             <PaymentList loan={selectedLoan} />
             <button
               className="modal-close"

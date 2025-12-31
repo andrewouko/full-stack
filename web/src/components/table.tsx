@@ -14,7 +14,7 @@ interface PaginationProps {
 interface Props<T extends Identifiable> {
   title: string;
   columnNames: string[];
-  data: T[];
+  data: (T & { className?: string })[];
   loading: boolean;
   hasError: boolean;
   pagination?: PaginationProps;
@@ -74,12 +74,15 @@ export function Table<T extends Identifiable>({
                 <tr
                   key={`item-${index}-${title}`}
                   onClick={() => onRowClick?.(item)}
+                  className={item.className}
                 >
-                  {Object.values(item).map((value, idx) => (
-                    <td key={`item-${index}-${title}-value-${idx}`}>
-                      {String(value)}
-                    </td>
-                  ))}
+                  {Object.values(item)
+                    .filter((value) => value !== item.className)
+                    .map((value, idx) => (
+                      <td key={`item-${index}-${title}-value-${idx}`}>
+                        {String(value)}
+                      </td>
+                    ))}
                 </tr>
               );
             })}

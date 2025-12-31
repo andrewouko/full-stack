@@ -13,10 +13,7 @@ const config: CodegenConfig = {
       },
     },
   },
-  config: {
-    withHooks: true,
-  },
-  ignoreNoDocuments: true,
+  ignoreNoDocuments: false,
 };
 
 export default config;
